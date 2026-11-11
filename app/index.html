@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RefundWatch: tickets that refund themselves when the event is called off</title>
+<meta name="description" content="Ticket escrow on GenLayer. The money waits in the contract until the event is over. If the official page announces a cancellation or postponement, validators read it and every buyer can be refunded, no claim form needed.">
+<meta name="theme-color" content="#F1E6D2">
+<link rel="stylesheet" href="app.css"><link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+.hero h1,.big,.dhead h2,.brand{text-transform:uppercase;letter-spacing:-.005em;font-weight:800}
+.notice{margin-top:14px;padding:12px 16px;border:1px dashed var(--ink);font-size:15px;background:var(--sheet)}
+.notice b{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.quoted{margin:14px 0 0;padding:12px 16px;border-left:4px solid var(--blood);background:var(--sheet);font-style:italic}
+.quoted small{display:block;font:11px var(--mono);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+.more{margin-top:12px}
+</style>
+</head><body>
+<header class="nav" id="nav"><div class="w">
+  <a class="brand" href="#top"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="logo.svg#m"/></svg><span>Refund<em>Watch</em></span></a>
+  <nav><a href="#how">How it works</a><a href="#who">Organizers &amp; buyers</a><a href="#app">Events</a><a href="#faq">FAQ</a><a href="https://github.com/cris-the-dev/genlayer-refundwatch#readme">Docs</a></nav>
+  <button id="connect" type="button">Connect wallet</button>
+</div></header>
+
+<main id="top">
+<section class="hero"><div class="w">
+  <div>
+    <span class="live">Live on GenLayer Testnet Bradbury</span>
+    <h1>The show is off. <em>Your money is already back.</em></h1>
+    <p class="lede">Buy a ticket and the money waits in escrow until the event is over. If the venue, league or airline posts a cancellation or postponement on its official page, GenLayer validators read it, quote it, and every buyer can be refunded. No claim form, no waiting on the organizer.</p>
+    <div class="cta"><a class="btn" href="#app">See events</a><a class="btn ghost" href="#post">List an event</a></div>
+  </div>
+  <article class="proof" aria-label="Example: an event called off">
+    <header><span>Event #1 · Spring Gala</span><span>0.001 GEN / seat</span></header>
+    <div class="att"><b>Listed</b><code>none</code><p>Official page read at listing: nothing announced.</p></div>
+    <div class="att bad"><b>Page read again</b><code>cancelled</code><p>“The Spring Gala has been cancelled due to storm damage to the hall.”</p></div>
+    <div class="att ok"><b>Refunds</b><code>2 / 2</code><p>Every buyer paid back from escrow. The organizer was never paid.</p></div>
+    <footer><span class="stampmini">Refunded</span><a href="#app">Open on-chain →</a></footer>
+  </article>
+</div></section>
+
+<div class="w"><div class="stats" id="stats">
+  <div class="stat"><b>–</b><span>Events</span></div><div class="stat"><b>–</b><span>On</span></div>
+  <div class="stat"><b>–</b><span>Called off</span></div><div class="stat"><b>–</b><span>In escrow (GEN)</span></div>
+</div></div>
+
+<section class="sec" id="how"><div class="w">
+  <p class="label">How it works</p>
+  <h2 class="big">The official page decides.</h2>
+  <ol class="how wide">
+    <li><span>I</span><div><b>List</b><p>The organizer names the event, its start, the ticket price and the official page where a cancellation would be posted. Validators read the page right away: it must announce nothing yet.</p></div></li>
+    <li><span>II</span><div><b>Buy</b><p>Buyers pay the price into the contract. Nothing goes to the organizer before the event is over.</p></div></li>
+    <li><span>III</span><div><b>Watch</b><p>Anyone can ask validators to read the page again. They agree on none, cancelled or postponed, and on a sentence quoted from the page that each of them finds in their own copy.</p></div></li>
+    <li><span>IV</span><div><b>Settle</b><p>Called off: anyone sends each buyer's refund. Went ahead: after the hold, one last reading, then the organizer is paid.</p></div></li>
+  </ol>
+</div></section>
+
+<section class="sec" id="who"><div class="w">
+  <p class="label">Built for both sides</p>
+  <div class="two">
+    <div class="sheet"><h3 class="h">For buyers</h3><ul>
+      <li>Your money is never with the organizer before the event has happened.</li>
+      <li>A cancellation on the official page is enough: you don't file a claim.</li>
+      <li>Postponed counts too: take your money back instead of a new date you can't make.</li>
+      <li>If nobody releases the money within 30 days of the hold, you can take it back.</li>
+    </ul></div>
+    <div class="sheet"><h3 class="h">For organizers</h3><ul>
+      <li>Buyers trust an unknown organizer when the money is in escrow.</li>
+      <li>Paid automatically once the event is over and the page says nothing.</li>
+      <li>Cancel in one click when you have to; refunds run themselves.</li>
+      <li>No chargebacks, no refund desk.</li>
+    </ul></div>
+  </div>
+  <div class="disc">
+    <div class="notice"><b>Quoted, not guessed</b>A cancellation counts only with a sentence from the page that every validator finds in its own copy. A quote that is not on the page reverts and changes nothing.</div>
+    <div class="notice"><b>Whole pages only</b>A page whose text is over 20,000 characters is refused at listing, never cut. An unreachable page reverts the reading: it is never read as “nothing announced”.</div>
+    <div class="notice"><b>One last look</b>Releasing the money reads the page again. If the event was called off after the start, the organizer is not paid and buyers are refunded.</div>
+  </div>
+</div></section>
+
+<section class="sec" id="app"><div class="w">
+  <p class="label">Events</p>
+  <h2 class="big">Every event, read live from the contract.</h2>
+  <p id="status" class="status" hidden></p>
+  <div class="list" id="events"><p class="empty">Reading the contract…</p></div>
+  <section id="detail" hidden></section>
+  <div id="post" class="postbox">
+    <details>
+      <summary>List an event</summary>
+      <form id="create">
+        <label>Title<input name="title" minlength="3" maxlength="120" required placeholder="Spring Gala, Main Hall"></label>
+        <label>Official page where a cancellation would be announced<input name="url" type="url" pattern="https?://.{3,300}" required placeholder="https://venue.example/events/spring-gala"></label>
+        <p class="hint">The venue's, the league's or the airline's own page, not yours if you can avoid it. Validators read it now; it must say nothing about a cancellation yet.</p>
+        <div class="row">
+          <label>Starts (your local time)<input name="starts" type="datetime-local" required></label>
+          <label>Price per seat (GEN)<input name="price" inputmode="decimal" value="0.001" required></label>
+          <label>Seats<input name="capacity" type="number" min="1" max="1000" value="100" required></label>
+          <label>Hold after start (hours)<input name="hold" type="number" min="1" max="720" value="24" required></label>
+        </div>
+        <div class="row"><button type="submit">Read the page and list</button></div>
+      </form>
+    </details>
+  </div>
+</div></section>
+
+<section class="sec" id="faq"><div class="w">
+  <p class="label">FAQ</p>
+  <div class="faq">
+    <details><summary>Who decides that an event is cancelled?</summary><p>GenLayer validators. Each one fetches the official page itself and answers one question: does it say this event is cancelled, postponed, or neither? A result counts only when they agree, and a cancellation or postponement also needs a sentence from the page that every validator finds.</p></details>
+    <details><summary>What if the page is down?</summary><p>The reading reverts and nothing changes; try again later. A page that is down is never taken as “nothing announced”. If the page is gone for good, nobody can release the money to the organizer, and buyers can take it back 30 days after the hold.</p></details>
+    <details><summary>What does the organizer get, and when?</summary><p>The price of every seat not refunded, after the hold you chose (1 to 720 hours after the start), once validators read the page one last time and it still announces nothing.</p></details>
+    <details><summary>Can a rumour or a “may be cancelled” trigger refunds?</summary><p>No. Only a page that says this event is cancelled, called off, postponed or moved. Validators are told to answer “none” for anything less, and the quote must be on the page.</p></details>
+    <details><summary>Who sends the refunds?</summary><p>Anyone: each ticket's refund goes to the address that bought it, whoever presses the button.</p></details>
+  </div>
+</div></section>
+
+<section class="sec"><div class="w"><div class="closing">
+  <div><h2 class="big">Sell tickets people trust.</h2><p>Escrow the money, name the official page, and let consensus watch it.</p></div>
+  <a class="btn" href="#post">List an event</a>
+</div></div></section>
+</main>
+
+<script type="module">
+import { contract, wireWallet, send, status, gen, toWei, esc, short, $, EXPLORER, payingTx, finalizeTx } from "./gl.js";
+const ADDR = "0x8A74b9521C9adD0B408E25d73B0614bdacac3f84";
+const rw = contract(ADDR);
+const B = BigInt, PER = 20;
+let me = null, items = [], view = { id: null, tickets: [], next: 0, reads: [], rnext: 0, payouts: [], pnext: 0 };
+const when = (ts) => ts ? new Date(ts * 1000).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC" : "–";
+const addr = (a) => `<a class="mono" href="${EXPLORER}/address/${esc(a)}">${esc(short(a))}</a>${me && a.toLowerCase() === me.toLowerCase() ? " (you)" : ""}`;
+const cls = { ON: "", RELEASED: "ok", CANCELLED: "bad", POSTPONED: "bad", HELD: "", REFUNDED: "ok" };
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+
+async function load(openId) {
+  try {
+    const all = [];
+    for (let s = 0; s !== null; ) { const r = await rw.read("get_events", [s, 50]); all.push(...r.items); s = r.next; }
+    items = all.reverse();
+    const n = (...st) => items.filter((e) => st.includes(e.status)).length;
+    const held = items.reduce((t, e) => t + B(e.held), 0n);
+    $("#stats").innerHTML = [[items.length, "Events"], [n("ON"), "On"], [n("CANCELLED", "POSTPONED"), "Called off"], [gen(held), "In escrow (GEN)"]]
+      .map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+    $("#events").innerHTML = items.length ? items.map((e) => `<a class="item" href="#event-${e.id}" data-id="${e.id}">
+      <div><b>${esc(e.title)}</b><small>#${e.id} · ${e.status.toLowerCase()} · ${when(e.starts_at)} · ${e.sold}/${e.capacity} sold</small></div></a>`).join("")
+      : `<p class="empty">No events yet.</p>`;
+    const h = location.hash.match(/^#event-(\d+)$/), id = openId ?? (h ? Number(h[1]) : null);
+    if (items.length) await open(Number.isInteger(id) && items.some((e) => e.id === id) ? id : items[0].id);
+  } catch (e) {
+    $("#events").innerHTML = `<p class="empty">Could not read the contract: ${esc(e.message)}</p>`;
+  }
+}
+async function moreTickets() { const r = await rw.read("get_tickets", [view.id, "", view.next, PER]); view.tickets.push(...r.items); view.next = r.next; }
+async function moreReads() { const r = await rw.read("get_readings", [view.id, view.rnext, PER]); view.reads.push(...r.items); view.rnext = r.next; }
+async function morePayouts() { const r = await rw.read("get_payouts", [view.pnext, 20, true]); view.payouts.push(...r.items); view.pnext = r.next; }
+async function open(id) {
+  view = { id, tickets: [], next: 0, reads: [], rnext: 0, payouts: [], pnext: 0 };
+  await Promise.all([moreTickets(), moreReads(), morePayouts()]);
+  await show();
+}
+
+// Refunds are open when the page (or the organizer) called the event off, or the money was never released in time.
+const refundable = (e, now) => e.status === "CANCELLED" || e.status === "POSTPONED" || (e.status === "ON" && now > e.lapse_at);
+
+function actions(e, tickets, recov, now) {
+  if (!me) return `<p class="connect-hint">Connect a wallet to buy, check the page, release or refund.</p>`;
+  const out = [], mine = (x) => !!x && x.toLowerCase() === me.toLowerCase(), row = (hint, btn) => `<p class="hint">${hint}</p><div>${btn}</div>`;
+  const left = e.capacity - e.sold;
+  if (e.status === "ON" && now < e.starts_at && !mine(e.organizer) && left > 0)
+    out.push(`<form data-form="buy" class="row" style="align-items:end"><label>Seats (${left} left, ${gen(e.price)} GEN each)<input name="count" type="number" min="1" max="${Math.min(10, left)}" value="1" required></label><div><button>Buy</button></div></form>`);
+  if (e.status === "ON") out.push(`<form data-form="check" class="row" style="align-items:end">${row("Ask validators to read the official page now. If it announces a cancellation or postponement, every ticket becomes refundable.", `<button class="ghost">Read the page</button>`)}</form>`);
+  if (e.status === "ON" && mine(e.organizer)) out.push(`<form data-form="cancel" class="row" style="align-items:end">${row("Calling the event off makes every ticket refundable. You will not be paid.", `<button class="ghost">Cancel the event</button>`)}</form>`);
+  if (e.status === "ON" && now >= e.release_at) out.push(`<form data-form="release" class="row" style="align-items:end">${row(`The hold has ended. Validators read the page one last time; if it still announces nothing, the organizer is paid ${gen(e.held)} GEN.`, `<button>Release to the organizer</button>`)}</form>`);
+  if (refundable(e, now)) for (const t of tickets.filter((t) => t.status === "HELD"))
+    out.push(`<form data-form="refund" data-ticket="${t.id}" class="row" style="align-items:end">${row(`Ticket #${t.id}: ${plural(t.count, "seat")} bought by ${addr(t.buyer)}.`, `<button>Refund ${gen(B(e.price) * B(t.count))} GEN</button>`)}</form>`);
+  if (B(recov) > 0n) out.push(`<form data-form="recover" class="row" style="align-items:end"><label>Recover ${gen(recov)} GEN from a failed transfer, to<input name="to" pattern="0x[0-9a-fA-F]{40}" value="${esc(me)}" required></label><div><button>Recover</button></div></form>`);
+  return out.length ? `<div style="display:grid;gap:16px;margin-top:20px">${out.join("")}</div>` : "";
+}
+
+function reading(r) {
+  const bad = r.answer !== "none";
+  return `<div class="case"><div class="case-top"><span class="id">${esc(r.answer)}</span><span class="by">${when(r.at)} · asked by ${addr(r.by)}</span></div>
+    <div class="ruling ${bad ? "bad" : "ok"}"><b>${bad ? `Consensus: the page says the event is ${esc(r.answer)}.` : "Consensus: the page announces nothing."}</b>${bad ? `<i>“${esc(r.quote)}”</i>` : ""}</div></div>`;
+}
+
+async function show() {
+  const e = items.find((x) => x.id === view.id);
+  const recov = me ? await rw.read("get_recoverable", [me]) : 0;
+  const el = $("#detail"), now = Math.floor(Date.now() / 1000);
+  el.hidden = false;
+  el.innerHTML = `<div class="dhead"><div><small>Event #${e.id} · listed ${when(e.at)} · starts ${when(e.starts_at)}</small><h2>${esc(e.title)} <span class="tag ${cls[e.status]}">${e.status.toLowerCase()}</span></h2>
+    <p>organizer ${addr(e.organizer)} · official page <a href="${esc(e.url)}" rel="noopener nofollow">${esc(e.url)} ↗</a></p></div></div>
+    ${e.quote ? `<p class="quoted"><small>${e.quote === "cancelled by the organizer" ? "Organizer" : "The official page"}</small>${esc(e.quote)}</p>` : ""}
+    <div class="mini">
+      <div><span>Price</span><b>${gen(e.price)} GEN</b></div>
+      <div><span>Sold / refunded</span><b>${e.sold} / ${e.refunded} of ${e.capacity}</b></div>
+      <div><span>In escrow</span><b>${gen(e.held)} GEN</b></div>
+      <div><span>Organizer paid from</span><b>${when(e.release_at)}</b></div>
+    </div>
+    <h3>Readings of the page (${view.reads.length}${view.rnext !== null ? "+" : ""})</h3>
+    ${view.reads.map(reading).join("")}
+    ${view.rnext !== null ? `<button class="ghost more" data-act="more-reads">More readings</button>` : ""}
+    <h3>Tickets</h3>
+    ${view.tickets.length ? `<div class="tbl"><table><tbody>${view.tickets.map((t) => `<tr><td class="num mut">#${t.id}</td><td>${addr(t.buyer)} · ${plural(t.count, "seat")} · ${when(t.at)}</td><td class="r"><span class="tag ${cls[t.status]}">${t.status.toLowerCase()}</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="hint">No tickets yet.</p>`}
+    ${view.next !== null ? `<button class="ghost more" data-act="more-tickets">More tickets</button>` : ""}
+    <h3>Unsettled transfers</h3>
+    <p class="hint">A payment is marked delivered or failed from its own transfer result, once the paying transaction is finalized. Anyone can settle.</p>
+    ${view.payouts.length ? `<div class="tbl"><table><tbody>${view.payouts.map((p) => `<tr><td class="num mut">#${p.id}</td><td>${esc(p.kind)}, ${gen(p.amount)} GEN to ${addr(p.to)}</td><td class="r">${me ? `<button class="ghost" data-act="settle_payout" data-arg="${p.id}">Settle</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
+      : `<p class="hint">None${view.pnext !== null ? " in the range read so far" : ""}.</p>`}
+    ${view.pnext !== null ? `<button class="ghost more" data-act="more-payouts">More transfers</button>` : ""}
+    ${actions(e, view.tickets, recov, now)}`;
+  document.querySelectorAll("#events .item").forEach((x) => x.toggleAttribute("aria-current", Number(x.dataset.id) === e.id));
+}
+
+async function settle(pid) {
+  const p = await rw.read("get_payout", [pid]);
+  let tx = payingTx(ADDR, p.sender, p.at);
+  if (!tx) tx = prompt(`Payout #${pid} was created by a transaction from ${p.sender} at ${when(p.at)}. Paste that GenLayer transaction hash (0x…):`)?.trim();
+  if (!tx) return;
+  status(`Settle payout #${pid}: looking up the finalization of ${short(tx)}…`);
+  const fin = await finalizeTx(tx).catch(() => null);
+  if (!fin) return status(`Settle payout #${pid}: the paying transaction is not finalized yet (or not found). Try again later.`, true);
+  if (await send(rw, `Settle payout #${pid}`, "settle_payout", [pid, tx, fin], 0n, async () => (await rw.read("get_payout", [pid])).status !== "SENT")) load(view.id);
+}
+
+addEventListener("scroll", () => $("#nav").classList.toggle("scrolled", scrollY > 8), { passive: true });
+document.querySelectorAll('a[href="#post"]').forEach((a) => a.addEventListener("click", () => { $("#post details").open = true; }));
+$("#events").addEventListener("click", (ev) => { const t = ev.target.closest(".item[data-id]"); if (t) { ev.preventDefault(); history.replaceState(null, "", `#event-${t.dataset.id}`); open(Number(t.dataset.id)); $("#detail").scrollIntoView({ behavior: "smooth" }); } });
+$("#detail").addEventListener("click", async (ev) => {
+  const fn = ev.target.dataset?.act;
+  if (fn === "more-tickets") { await moreTickets(); return show(); }
+  if (fn === "more-reads") { await moreReads(); return show(); }
+  if (fn === "more-payouts") { await morePayouts(); return show(); }
+  if (fn === "settle_payout") return settle(Number(ev.target.dataset.arg));
+});
+$("#detail").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = ev.target, fn = f.dataset.form, id = view.id, e = items.find((x) => x.id === id);
+  let args = [id], value = 0n, check, payee; // payee: who the call may pay (see gl.js)
+  const after = (ok) => async () => ok(await rw.read("get_event", [id]));
+  const reads = async () => (await rw.read("get_readings", [id, 0, 1])).total;
+  if (fn === "buy") { const n = Number(f.count.value); args = [id, n]; value = B(e.price) * B(n); check = after((x) => x.sold === e.sold + n); }
+  else if (fn === "check") { const n = await reads(); check = async () => (await reads()) > n; }
+  else if (fn === "cancel") check = after((x) => x.status === "CANCELLED");
+  else if (fn === "release") { payee = e.organizer; check = after((x) => x.status !== "ON"); }
+  else if (fn === "refund") { const t = view.tickets.find((x) => x.id === Number(f.dataset.ticket)); args = [t.id]; payee = t.buyer; check = async () => (await rw.read("get_ticket", [t.id])).status === "REFUNDED"; }
+  else { args = [f.to.value]; payee = f.to.value; check = async () => B(await rw.read("get_recoverable", [me])) === 0n; }
+  if (await send(rw, fn, fn, args, value, check, payee)) load(id);
+});
+$("#create").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const f = ev.target;
+  try {
+    const n = items.length, starts = Math.floor(new Date(f.starts.value).getTime() / 1000);
+    const args = [f.title.value.trim(), f.url.value.trim(), starts, toWei(f.price.value), Number(f.capacity.value), Number(f.hold.value)];
+    if (await send(rw, "List event", "list_event", args, 0n, async () => (await rw.read("get_events", [0, 1])).total === n + 1)) { f.reset(); load(n); }
+  } catch (err) { status(err.message, true); }
+});
+wireWallet((a) => { me = a; if (view.id !== null) show(); });
+load();
+</script>
+<footer><div class="w">
+  <a class="brand" href="#top"><svg viewBox="0 0 64 64" aria-hidden="true"><use href="logo.svg#m"/></svg><span>Refund<em>Watch</em></span></a>
+  <nav><a href="https://github.com/cris-the-dev/genlayer-refundwatch#readme">Docs</a><a href="https://github.com/cris-the-dev/genlayer-refundwatch">GitHub</a><a href="https://explorer-bradbury.genlayer.com/address/0x8A74b9521C9adD0B408E25d73B0614bdacac3f84">Contract</a><a href="https://genlayer.com">Built on GenLayer</a></nav>
+</div></footer>
+</body></html>
