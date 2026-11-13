@@ -6,6 +6,7 @@ import pytest
 
 from tests.direct.conftest import (
     CALLED_OFF,
+    REF,
     HOUR,
     LISTED,
     PRICE,
@@ -39,7 +40,9 @@ def test_list_and_buy(ev, direct_alice):
     "kw, msg",
     [
         ({"title": "x"}, "3-120"),
-        ({"url": "ftp://x"}, "http(s)"),
+        ({"url": "ftp://x"}, "https url"),
+        ({"ref": "x"}, "event identifier must be"),
+        ({"ref": "SG-2030-0112", "shown": False}, "does not show event SG-2030-0112"),
         ({"starts": "2029-12-31T00:00:00Z"}, "within a year"),
         ({"price": 0}, "price above 0"),
         ({"capacity": 1001}, "capacity 1-1000"),
@@ -51,8 +54,67 @@ def test_list_and_buy(ev, direct_alice):
 )
 def test_list_validation(ev, direct_vm, direct_alice, kw, msg):
     with direct_vm.expect_revert(msg):
-        list_event(direct_vm, ev, direct_alice, **kw)
+        list_event(direct_vm, ev, direct_alice, **{"ref": "SG-2030-0111", **kw})
     assert ev.get_events(0, 10)["total"] == 1
+
+
+# ── The source: an approved venue's host and the event's identifier ────────
+
+
+@pytest.mark.parametrize(
+    "url, msg",
+    [
+        ("https://organizer.example/spring-gala", "not an approved event source"),  # the organizer's own site
+        ("https://venue.example.evil.example/gala", "not an approved event source"),  # approved name under another host
+        ("https://fake-venue.example/gala", "not an approved event source"),  # approved name as a suffix
+        ("https://venue.example@evil.example/gala", "https url"),  # user-info
+        ("https://venue.example:8443/gala", "https url"),  # port
+        ("http://venue.example/gala", "https url"),  # not https
+    ],
+)
+def test_an_unapproved_source_is_refused_before_reading(ev, direct_vm, direct_alice, url, msg):
+    with direct_vm.expect_revert(msg):
+        list_event(direct_vm, ev, direct_alice, ref="SG-2030-0999", url=url)
+    assert ev.get_events(0, 10)["total"] == 1
+
+
+def test_an_event_identifier_is_listed_once_per_source(ev, direct_vm, direct_alice, direct_bob):
+    # Another listing of the same event (even by someone else) cannot hold its own escrow.
+    with direct_vm.expect_revert("event SG-2030-0110 on venue.example is already listed (#0)"):
+        list_event(direct_vm, ev, direct_bob, url="https://www.venue.example/events/spring-gala")
+    e = ev.get_event(0)
+    assert (e["ref"], e["source"], e["source_name"]) == (REF, "venue.example", "Main Hall (test)")
+
+
+def test_only_the_owner_approves_sources(ev, direct_vm, direct_alice, direct_bob):
+    direct_vm.sender = direct_bob
+    with direct_vm.expect_revert("not authorised"):
+        ev.set_source("organizer.example", "My own page")
+    direct_vm.sender = direct_alice  # the deployer
+    ev.set_source("league.example", "City League")
+    assert ev.get_sources() == {"venue.example": "Main Hall (test)", "league.example": "City League"}
+    ev.set_source("venue.example", "")  # withdrawn for new events; event 0 keeps its page
+    with direct_vm.expect_revert("not an approved event source"):
+        list_event(direct_vm, ev, direct_alice, ref="SG-2030-0999")
+
+
+def test_a_page_without_the_event_cannot_release_or_refund(ev, direct_vm, direct_alice, direct_bob, ledger):
+    # The page now shows another event (the venue reused it): it decides nothing about this one.
+    other = "<html><body><h1>Winter Gala</h1><p>Event WG-2030-1201. The Winter Gala has been cancelled.</p></body></html>"
+    page(direct_vm, body=other, answer="cancelled", quote="The Winter Gala has been cancelled.")
+    direct_vm.sender = direct_bob
+    with direct_vm.expect_revert("does not show event SG-2030-0110"):
+        ev.check(0)
+    direct_vm.warp("2030-01-11T19:00:00Z")
+    page(direct_vm, body=other)
+    with direct_vm.expect_revert("does not show event SG-2030-0110"):
+        ev.release(0)
+    assert (ev.get_event(0)["status"], ledger.paid_to(direct_alice)) == ("ON", 0)
+    # A validator whose copy lacks the identifier never agrees with a leader that saw it.
+    page(direct_vm)
+    ev.release(0)
+    page(direct_vm, body=other)
+    assert direct_vm.run_validator() is False
 
 
 def test_buy_validation(ev, direct_vm, direct_alice, direct_bob):
@@ -62,7 +124,7 @@ def test_buy_validation(ev, direct_vm, direct_alice, direct_bob):
         buy(direct_vm, ev, direct_bob, count=11)
     with direct_vm.expect_revert("organizer cannot buy"):
         buy(direct_vm, ev, direct_alice)
-    list_event(direct_vm, ev, direct_alice, capacity=2)
+    list_event(direct_vm, ev, direct_alice, ref="SG-2030-0111", capacity=2)
     buy(direct_vm, ev, direct_bob, event=1, count=2)
     with direct_vm.expect_revert("0 left"):
         buy(direct_vm, ev, direct_bob, event=1)

@@ -4,8 +4,11 @@
 //   npm i genlayer-js@2.0.0-rc.2   # plus the estimateTransactionFees patch in app/README.md
 //   GL_PK0=0x... GL_PK1=0x... GL_PK2=0x... node tests/integration/bradbury.mjs build/refund_watch.py [contract]
 //
-// GL_PK0 organizes (pages in evidence/, hosted at EVIDENCE); GL_PK1 and GL_PK2 buy. A page that
-// already announces a postponement cannot be listed. Spring Gala: the organizer cannot buy, a wrong
+// GL_PK0 deploys with one approved source, the host serving evidence/ (EVIDENCE), and organizes;
+// GL_PK1 and GL_PK2 buy. Only the owner approves sources. A page on any other host (an organizer's own
+// site, the parent domain) is refused before it is read; a page that does not show the event number
+// cannot be listed; an event number is listed once per source. A page that already announces a
+// postponement cannot be listed. Spring Gala: the organizer cannot buy, a wrong
 // amount is refused, nothing is refundable while the page says nothing; then the page is edited to
 // announce the cancellation (the run waits for it), validators read it and quote it, sales close and
 // anyone refunds each buyer once. Quiz Night: only the organizer cancels, and the buyer is refunded.
@@ -18,6 +21,7 @@ import { testnetBradbury } from "genlayer-js/chains";
 
 const PRICE = 10n ** 14n, HOUR = 3600;
 const EVIDENCE = process.env.EVIDENCE ?? "https://refundwatch.cristhedev.com/evidence/";
+const HOST = new URL(EVIDENCE).host, SOURCES = new Map([[HOST, "RefundWatch demo venue (evidence pages)"]]);
 const GALA = EVIDENCE + "spring-gala.html", HARBOUR = EVIDENCE + "harbour-lights.html", QUIZ = EVIDENCE + "quiz-night.html", FAIR = EVIDENCE + "book-fair-postponed.html";
 const CONSENSUS_MAIN = "0x2e2766cbc3e5e61ce93bbcdcbb3eacb82082a019";
 const T_FINALIZED = "0x24196ec40f90671b7144e716978686b4f3c7d6b00b23da3971ef2b52af27d87f";
@@ -120,7 +124,7 @@ async function settle(id, paid, fromBlock) {
 
 let address = process.argv[3];
 if (!address) {
-  const hash = await c0.deployContract({ code: readFileSync(process.argv[2], "utf8"), args: [], fees: await fees(c0) });
+  const hash = await c0.deployContract({ code: readFileSync(process.argv[2], "utf8"), args: [SOURCES], fees: await fees(c0) });
   const r = await wait(c0, hash);
   address = r.txDataDecoded?.contractAddress;
   console.log(`deploy: ${hash} ${r.txExecutionResultName} -> ${address}`);
@@ -135,14 +139,22 @@ const pid = Number((await read("get_accounting")).payout_count);
 const text = async (url) => (await fetch(url, { cache: "no-store" })).text();
 check(!(await text(GALA)).includes("has been cancelled"), "the Spring Gala page announces nothing yet");
 
+// Sources: only approved hosts, approved only by the owner.
+check(JSON.stringify(await read("get_sources")).includes(HOST), `${HOST} is the approved source`);
+await fails("only the owner approves sources", c1, "approve a source as a buyer", "set_source", ["organizer.cristhedev.com", "Organizer"]);
+await fails("an organizer-controlled page is refused", c0, "list on the organizer's own site", "list_event", ["Spring Gala", "LH-0614-SG", GALA.replace(HOST, "organizer.cristhedev.com"), now() + 7 * 24 * HOUR, PRICE, 100, 24]);
+await fails("an unrelated host is refused", c0, "list on the parent domain", "list_event", ["Spring Gala", "LH-0614-SG", GALA.replace(HOST, "cristhedev.com"), now() + 7 * 24 * HOUR, PRICE, 100, 24]);
+await fails("a page that does not show the event number cannot be listed", c0, "list the Spring Gala on the Harbour Lights page", "list_event", ["Spring Gala", "LH-0614-SG", HARBOUR, now() + 7 * 24 * HOUR, PRICE, 100, 24]);
+
 // Harbour Lights first: it starts 20 minutes from now and holds the money for one hour after.
-await fails("a page that already announces a postponement cannot be listed", c0, "list the postponed book fair", "list_event", ["Autumn Book Fair", FAIR, now() + 7 * 24 * HOUR, PRICE, 50, 24]);
-await ok(c0, "list Harbour Lights", "list_event", ["Harbour Lights Concert", HARBOUR, now() + 20 * 60, PRICE, 50, 1]);
+await fails("a page that already announces a postponement cannot be listed", c0, "list the postponed book fair", "list_event", ["Autumn Book Fair", "LH-0919-BF", FAIR, now() + 7 * 24 * HOUR, PRICE, 50, 24]);
+await ok(c0, "list Harbour Lights", "list_event", ["Harbour Lights Concert", "LH-0520-HL", HARBOUR, now() + 20 * 60, PRICE, 50, 1]);
 await ok(c1, "buy 1 Harbour Lights seat", "buy", [eid, 1], { value: PRICE });
 await fails("release is refused during the hold", c1, "release before the hold ends", "release", [eid], { payee: org });
 
 // Spring Gala: escrowed, then called off on its official page.
-await ok(c0, "list the Spring Gala", "list_event", ["Spring Gala", GALA, now() + 7 * 24 * HOUR, PRICE, 100, 24]);
+await ok(c0, "list the Spring Gala", "list_event", ["Spring Gala", "LH-0614-SG", GALA, now() + 7 * 24 * HOUR, PRICE, 100, 24]);
+await fails("an event number is listed once per source", c0, "list the Spring Gala again", "list_event", ["Spring Gala (again)", "LH-0614-SG", GALA, now() + 7 * 24 * HOUR, PRICE, 100, 24]);
 await fails("the organizer cannot buy", c0, "buy as the organizer", "buy", [eid + 1, 1], { value: PRICE });
 await fails("the amount must be price x count", c1, "buy 2 seats paying for 1", "buy", [eid + 1, 2], { value: PRICE });
 await ok(c1, "buy 2 Spring Gala seats", "buy", [eid + 1, 2], { value: 2n * PRICE });
@@ -162,7 +174,7 @@ await fails("a ticket is refunded once", c2, "refund ticket 1 again", "refund", 
 const r2 = await ok(c2, "refund ticket 2", "refund", [tid + 2], { payee: b2 });
 
 // Quiz Night: called off by its organizer.
-await ok(c0, "list Quiz Night", "list_event", ["Quiz Night", QUIZ, now() + 7 * 24 * HOUR, PRICE, 30, 24]);
+await ok(c0, "list Quiz Night", "list_event", ["Quiz Night", "LH-0702-QN", QUIZ, now() + 7 * 24 * HOUR, PRICE, 30, 24]);
 await ok(c2, "buy 1 Quiz Night seat", "buy", [eid + 2, 1], { value: PRICE });
 await fails("only the organizer cancels", c2, "cancel as a buyer", "cancel", [eid + 2]);
 await ok(c0, "cancel Quiz Night", "cancel", [eid + 2]);

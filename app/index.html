@@ -86,8 +86,9 @@
       <summary>List an event</summary>
       <form id="create">
         <label>Title<input name="title" minlength="3" maxlength="120" required placeholder="Spring Gala, Main Hall"></label>
-        <label>Official page where a cancellation would be announced<input name="url" type="url" pattern="https?://.{3,300}" required placeholder="https://venue.example/events/spring-gala"></label>
-        <p class="hint">The venue's, the league's or the airline's own page, not yours if you can avoid it. Validators read it now; it must say nothing about a cancellation yet.</p>
+        <label>Event identifier on that page<input name="ref" minlength="4" maxlength="40" required placeholder="SG-2030-0614"></label>
+        <label>The event's official page<input name="url" type="url" pattern="https://.{3,300}" required placeholder="https://venue.example/events/spring-gala"></label>
+        <p class="hint">On an approved venue's or league's site: <span id="sources">…</span>. Validators read it now; it must show the event identifier and say nothing about a cancellation yet. Every later reading needs the identifier on the page too.</p>
         <div class="row">
           <label>Starts (your local time)<input name="starts" type="datetime-local" required></label>
           <label>Price per seat (GEN)<input name="price" inputmode="decimal" value="0.001" required></label>
@@ -119,7 +120,7 @@
 
 <script type="module">
 import { contract, wireWallet, send, status, gen, toWei, esc, short, $, EXPLORER, payingTx, finalizeTx } from "./gl.js";
-const ADDR = "0x8A74b9521C9adD0B408E25d73B0614bdacac3f84";
+const ADDR = "0xBE9d25309FCB7C2A6348fe43a69f5c96E0c7cbdf";
 const rw = contract(ADDR);
 const B = BigInt, PER = 20;
 let me = null, items = [], view = { id: null, tickets: [], next: 0, reads: [], rnext: 0, payouts: [], pnext: 0 };
@@ -185,7 +186,7 @@ async function show() {
   const el = $("#detail"), now = Math.floor(Date.now() / 1000);
   el.hidden = false;
   el.innerHTML = `<div class="dhead"><div><small>Event #${e.id} · listed ${when(e.at)} · starts ${when(e.starts_at)}</small><h2>${esc(e.title)} <span class="tag ${cls[e.status]}">${e.status.toLowerCase()}</span></h2>
-    <p>organizer ${addr(e.organizer)} · official page <a href="${esc(e.url)}" rel="noopener nofollow">${esc(e.url)} ↗</a></p></div></div>
+    <p>organizer ${addr(e.organizer)} · event ${esc(e.ref)} on ${esc(e.source_name || e.source)} <a href="${esc(e.url)}" rel="noopener nofollow">${esc(e.url)} ↗</a></p></div></div>
     ${e.quote ? `<p class="quoted"><small>${e.quote === "cancelled by the organizer" ? "Organizer" : "The official page"}</small>${esc(e.quote)}</p>` : ""}
     <div class="mini">
       <div><span>Price</span><b>${gen(e.price)} GEN</b></div>
@@ -248,11 +249,12 @@ $("#create").addEventListener("submit", async (ev) => {
   const f = ev.target;
   try {
     const n = items.length, starts = Math.floor(new Date(f.starts.value).getTime() / 1000);
-    const args = [f.title.value.trim(), f.url.value.trim(), starts, toWei(f.price.value), Number(f.capacity.value), Number(f.hold.value)];
+    const args = [f.title.value.trim(), f.ref.value.trim(), f.url.value.trim(), starts, toWei(f.price.value), Number(f.capacity.value), Number(f.hold.value)];
     if (await send(rw, "List event", "list_event", args, 0n, async () => (await rw.read("get_events", [0, 1])).total === n + 1)) { f.reset(); load(n); }
   } catch (err) { status(err.message, true); }
 });
 wireWallet((a) => { me = a; if (view.id !== null) show(); });
+rw.read("get_sources", []).then((s) => { document.getElementById("sources").textContent = Object.entries(s).map(([h, n]) => `${n} (${h})`).join(", ") || "none yet"; }).catch(() => {});
 load();
 </script>
 <footer><div class="w">

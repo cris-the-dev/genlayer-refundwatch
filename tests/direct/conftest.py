@@ -178,8 +178,10 @@ def tick(vm, seconds=1):
     vm.warp(t.strftime("%Y-%m-%dT%H:%M:%SZ"))
 
 URL = "https://venue.example/events/spring-gala"
-LISTED = "<html><body><h1>Spring Gala</h1><p>Saturday 14 June, 19:00, Main Hall. Doors open at 18:30.</p></body></html>"
-CALLED_OFF = "<html><body><h1>Spring Gala</h1><p><b>Update:</b> The Spring Gala has been cancelled due to storm damage to the hall.</p></body></html>"
+REF = "SG-2030-0110"
+SOURCES = {"venue.example": "Main Hall (test)"}
+LISTED = "<html><body><h1>Spring Gala</h1><p>Event SG-2030-0110.</p><p>Saturday 14 June, 19:00, Main Hall. Doors open at 18:30.</p></body></html>"
+CALLED_OFF = "<html><body><h1>Spring Gala</h1><p>Event SG-2030-0110.</p><p><b>Update:</b> The Spring Gala has been cancelled due to storm damage to the hall.</p></body></html>"
 QUOTE = "The Spring Gala has been cancelled due to storm damage to the hall."
 PRICE = GEN // 100
 HOUR = 3_600
@@ -187,10 +189,10 @@ START = "2030-01-10T19:00:00Z"
 LLM = r"whether one event is still going ahead"
 
 
-def page(vm, body=LISTED, status=200, answer="none", quote=""):
-    """The event page and the LLM's answer, for leader and validators."""
+def page(vm, body=LISTED, status=200, answer="none", quote="", ref=REF):
+    """The event page (showing event `ref`) and the LLM's answer, for leader and validators."""
     vm.clear_mocks()
-    vm.mock_web(r"venue\.example", {"status": status, "body": body})
+    vm.mock_web(r"venue\.example", {"status": status, "body": body.replace(REF, ref)})
     vm.mock_llm(LLM, json.dumps({"status": answer, "quote": quote}))
 
 
@@ -198,10 +200,10 @@ def ts(iso):
     return int(datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp())
 
 
-def list_event(vm, c, who, starts=START, price=PRICE, capacity=100, hold=24, title="Spring Gala", url=URL, **kw):
-    page(vm, **kw)
+def list_event(vm, c, who, starts=START, price=PRICE, capacity=100, hold=24, title="Spring Gala", ref=REF, url=URL, **kw):
+    page(vm, ref=ref if kw.pop("shown", True) else REF, **kw)
     vm.sender = who
-    return c.list_event(title, url, ts(starts), price, capacity, hold)
+    return c.list_event(title, ref, url, ts(starts), price, capacity, hold)
 
 
 def buy(vm, c, who, event=0, count=1, value=None):
@@ -217,7 +219,8 @@ def buy(vm, c, who, event=0, count=1, value=None):
 def ev(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
     """Event 0 by Alice; Bob holds ticket 0 (2 seats), Charlie ticket 1 (1 seat)."""
     direct_vm.warp("2030-01-01T10:00:00Z")
-    c = direct_deploy("contracts/refund_watch.py")
+    direct_vm.sender = direct_alice  # Alice deploys: she owns the source list
+    c = direct_deploy("contracts/refund_watch.py", SOURCES)
     list_event(direct_vm, c, direct_alice)
     buy(direct_vm, c, direct_bob, count=2)
     buy(direct_vm, c, direct_charlie)
