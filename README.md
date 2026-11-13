@@ -194,7 +194,7 @@ event state and time, escaping, and exact money formatting.
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 genvm-lint check contracts/refund_watch.py
-pytest tests/direct -v                         # 44 tests
+pytest tests/direct -v                         # 45 tests
 # end-to-end on Bradbury Phase 2, against the packed code (keys in GL_PK0..2)
 python deploy/shrink.py contracts/refund_watch.py build/refund_watch.py --pack
 npm i genlayer-js@2.0.0-rc.2   # plus the fee-estimate patch in app/README.md
@@ -207,7 +207,7 @@ direct tests against the packed code. The E2E pages are in
 [`evidence/`](evidence/), served at `https://refundwatch.cristhedev.com/evidence/`;
 the Spring Gala page is replaced by `spring-gala-cancelled.html` mid-run.
 
-## Tests (44 direct, Bradbury E2E)
+## Tests (45 direct, Bradbury E2E)
 
 - **Sources and event numbers** — an organizer-controlled page, a look-alike or parent domain, user-info, a port or plain http are refused before reading; a subdomain of an approved host is accepted; only the owner approves sources; a page that does not show the event number cannot list, open refunds or release (leader reverts, validators disagree); one listing per number and source.
 - **Listing and buying** — validation of title, event number, url, start, price, capacity and hold; a page already announcing a cancellation cannot be listed; exact payment, seat cap, no buying by the organizer or after the start.

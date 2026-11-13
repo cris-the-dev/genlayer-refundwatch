@@ -86,6 +86,10 @@ def test_an_event_identifier_is_listed_once_per_source(ev, direct_vm, direct_ali
     assert (e["ref"], e["source"], e["source_name"]) == (REF, "venue.example", "Main Hall (test)")
 
 
+def test_a_subdomain_of_an_approved_source_is_accepted(ev, direct_vm, direct_alice):
+    assert list_event(direct_vm, ev, direct_alice, ref="SG-2030-0444", url="https://tickets.venue.example/e/0444") == 1
+    assert ev.get_event(1)["source"] == "venue.example"
+
 def test_only_the_owner_approves_sources(ev, direct_vm, direct_alice, direct_bob):
     direct_vm.sender = direct_bob
     with direct_vm.expect_revert("not authorised"):
